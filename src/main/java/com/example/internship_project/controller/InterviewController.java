@@ -16,7 +16,7 @@ public class InterviewController {
                         "Расскажите о своём опыте с Java",
                         "Что такое REST API?"
                 },
-                "recommendations", "Заглушка — реальный ответ появится после интеграции с AI"
+                "recommendations", "Заглушка, нормальный ответ появится после интеграции с AI"
         );
     }
 }
