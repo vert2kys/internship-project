@@ -2,26 +2,20 @@ package com.example.internship_project.controller;
 
 import com.example.internship_project.dto.InterviewRequest;
 import com.example.internship_project.dto.InterviewResponse;
+import com.example.internship_project.service.InterviewService;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/interview")
+@RequiredArgsConstructor
 public class InterviewController {
 
+    private final InterviewService interviewService;
+
     @PostMapping("/generate")
-    public InterviewResponse generate(@Valid @RequestBody InterviewRequest request) {
-        return new InterviewResponse(
-                List.of(
-                        "Расскажите о своём опыте с Java",
-                        "Что такое REST API?"
-                ),
-                "Заглушка, нормальный ответ появится после интеграции с AI"
-        );
+    public InterviewResponse generateQuestions(@Valid @RequestBody InterviewRequest request) {
+        return interviewService.generateQuestions(request);
     }
 }

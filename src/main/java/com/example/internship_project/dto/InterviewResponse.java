@@ -10,6 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InterviewResponse {
+
     private List<String> questions;
-    private String recommendations;
+    private List<String> recommendations;
 }
