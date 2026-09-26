@@ -3,13 +3,16 @@ package com.example.internship_project.service;
 import com.example.internship_project.dto.InterviewRequest;
 import com.example.internship_project.dto.InterviewResponse;
 import com.example.internship_project.repository.InterviewLogRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,16 +25,27 @@ class InterviewServiceTest {
     @Mock
     private GeminiService geminiService;
 
+    @Spy
+    private PromptBuilderService promptBuilderService = new PromptBuilderService();
+
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     @Mock
     private InterviewLogRepository logRepository;
 
-    @InjectMocks
     private InterviewService interviewService;
-
     private InterviewRequest validRequest;
 
     @BeforeEach
     void setUp() {
+        interviewService = new InterviewService(
+                geminiService,
+                promptBuilderService,
+                objectMapper,
+                Optional.of(logRepository)
+        );
+
         validRequest = new InterviewRequest();
         validRequest.setJobDescription("Java Developer with Spring Boot experience");
     }
