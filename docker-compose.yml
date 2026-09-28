@@ -1,23 +1,36 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: interview_db_postgres
+    container_name: interview_db_container
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: interview_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d interview_db"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    container_name: interview_app_container
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/interview_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgrespassword
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
-
