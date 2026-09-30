@@ -20,4 +20,4 @@ jobs:
           distribution: 'temurin'
 
       - name: Build with Maven
-        run: mvn clean verify -DskipTests
+        run: mvn clean package -DskipTests
