@@ -39,11 +39,16 @@ class InterviewServiceTest {
 
     @BeforeEach
     void setUp() {
+        InterviewResponseParser responseParser = new InterviewResponseParser(objectMapper);
+        InterviewLogBuilder interviewLogBuilder = new InterviewLogBuilder(objectMapper);
+        InterviewLogService interviewLogService = new InterviewLogService(logRepository, interviewLogBuilder);
+
         interviewService = new InterviewService(
                 geminiService,
                 promptBuilderService,
-                objectMapper,
-                Optional.of(logRepository)
+                responseParser,
+                new InterviewFallbackResponseFactory(),
+                interviewLogService
         );
 
         validRequest = new InterviewRequest();
@@ -76,6 +81,20 @@ class InterviewServiceTest {
     @DisplayName("Возврат fallback-ответа при пустом ответе от Gemini API")
     void generateQuestions_ApiError_ReturnsFallback() {
         when(geminiService.askGemini(anyString())).thenReturn(null);
+
+        InterviewResponse response = interviewService.generateQuestions(validRequest);
+
+        assertNotNull(response);
+        assertFalse(response.getQuestions().isEmpty());
+        assertTrue(response.getQuestions().get(0).contains("Расскажите о вашем ключевом опыте"));
+
+        verify(logRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("Возврат fallback-ответа при невалидном JSON от Gemini API")
+    void generateQuestions_InvalidJson_ReturnsFallback() {
+        when(geminiService.askGemini(anyString())).thenReturn("{not-json}");
 
         InterviewResponse response = interviewService.generateQuestions(validRequest);
 

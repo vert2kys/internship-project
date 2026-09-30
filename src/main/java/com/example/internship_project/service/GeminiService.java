@@ -11,7 +11,7 @@ import org.springframework.web.client.RestClient;
 import java.time.Duration;
 
 @Service
-public class GeminiService {
+public class GeminiService implements GeminiClient {
 
     private final RestClient restClient;
 
@@ -32,6 +32,7 @@ public class GeminiService {
     }
 
     @Cacheable("geminiResponses")
+    @Override
     public String askGemini(String prompt) {
         GeminiRequest requestBody = GeminiRequest.fromPrompt(prompt);
 
