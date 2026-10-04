@@ -3,7 +3,6 @@ package com.example.internship_project.service;
 import com.example.internship_project.dto.gemini.GeminiRequest;
 import com.example.internship_project.dto.gemini.GeminiResponse;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -31,7 +30,6 @@ public class GeminiService implements GeminiClient {
                 .build();
     }
 
-    @Cacheable("geminiResponses")
     @Override
     public String askGemini(String prompt) {
         GeminiRequest requestBody = GeminiRequest.fromPrompt(prompt);
