@@ -41,14 +41,14 @@ class InterviewServiceTest {
     void setUp() {
         InterviewResponseParser responseParser = new InterviewResponseParser(objectMapper);
         InterviewLogBuilder interviewLogBuilder = new InterviewLogBuilder(objectMapper);
-        InterviewLogService interviewLogService = new InterviewLogService(logRepository, interviewLogBuilder);
+        InterviewLogService realInterviewLogService = new InterviewLogService(logRepository, interviewLogBuilder, objectMapper);
 
         interviewService = new InterviewService(
                 geminiService,
                 promptBuilderService,
                 responseParser,
                 new InterviewFallbackResponseFactory(),
-                interviewLogService
+                realInterviewLogService
         );
 
         validRequest = new InterviewRequest();
@@ -75,6 +75,25 @@ class InterviewServiceTest {
 
         verify(geminiService, times(1)).askGemini(anyString());
         verify(logRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("Возвращение сохраненных вопросов из базы при повторном запросе")
+    void generateQuestions_WhenLogExists_ReturnsStoredQuestionsWithoutCallingGemini() {
+        InterviewResponse storedResponse = new InterviewResponse(
+                java.util.List.of("Как вы используете Java collections?"),
+                java.util.List.of("Повторите коллекции")
+        );
+
+        when(logRepository.findTopByRequestIgnoreCaseOrderByCreatedAtDesc(anyString()))
+                .thenReturn(Optional.of(new com.example.internship_project.entity.InterviewLog(1L, "Java Developer", "{\"questions\":[\"Как вы используете Java collections?\"],\"recommendations\":[\"Повторите коллекции\"]}", java.time.LocalDateTime.now())));
+
+        InterviewResponse response = interviewService.generateQuestions(validRequest);
+
+        assertNotNull(response);
+        assertEquals(1, response.getQuestions().size());
+        assertEquals("Как вы используете Java collections?", response.getQuestions().get(0));
+        verify(geminiService, never()).askGemini(anyString());
     }
 
     @Test

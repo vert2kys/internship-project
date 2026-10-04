@@ -2,14 +2,10 @@ package com.example.internship_project.service;
 
 import com.example.internship_project.dto.InterviewRequest;
 import com.example.internship_project.dto.InterviewResponse;
-import com.example.internship_project.entity.InterviewLog;
-import com.example.internship_project.repository.InterviewLogRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,9 +20,16 @@ public class InterviewService {
     private final InterviewLogService interviewLogService;
 
     public InterviewResponse generateQuestions(InterviewRequest request) {
-        log.info("Запрос на генерацию вопросов для вакансии: {}", request.getJobDescription());
+        String jobDescription = normalizeJobDescription(request);
+        log.info("Запрос на генерацию вопросов для вакансии: {}", jobDescription);
 
-        String prompt = promptBuilder.buildInterviewPrompt(request.getJobDescription());
+        Optional<InterviewResponse> savedResponse = interviewLogService.findByRequest(jobDescription);
+        if (savedResponse.isPresent()) {
+            log.info("Найден сохраненный ответ в базе данных для jobDescription: {}", jobDescription);
+            return savedResponse.get();
+        }
+
+        String prompt = promptBuilder.buildInterviewPrompt(jobDescription);
 
         try {
             String rawResponse = geminiClient.askGemini(prompt);
@@ -39,14 +42,21 @@ public class InterviewService {
             InterviewResponse response = responseParser.parse(rawResponse);
             log.info("Успешно сгенерировано {} вопросов", response.getQuestions().size());
 
-            interviewLogService.save(request.getJobDescription(), response);
+            interviewLogService.save(jobDescription, response);
             return response;
 
         } catch (Exception e) {
             log.error("Ошибка при обработке ответа от Gemini API: {}. Применение fallback-ответа", e.getMessage());
-            InterviewResponse fallbackResponse = fallbackResponseFactory.create(request.getJobDescription());
-            interviewLogService.save(request.getJobDescription(), fallbackResponse);
+            InterviewResponse fallbackResponse = fallbackResponseFactory.create(jobDescription);
+            interviewLogService.save(jobDescription, fallbackResponse);
             return fallbackResponse;
         }
+    }
+
+    private String normalizeJobDescription(InterviewRequest request) {
+        if (request == null || request.getJobDescription() == null) {
+            return "";
+        }
+        return request.getJobDescription().trim();
     }
 }
